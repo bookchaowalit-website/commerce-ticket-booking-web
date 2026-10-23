@@ -1,31 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
-type Seat = { id: string; taken: boolean };
-type Booking = { name: string; seats: string[]; at: number };
-const ROWS = ["A", "B", "C", "D"];
-const INITIAL_SEATS: Seat[] = ROWS.flatMap((row) => Array.from({ length: 8 }, (_, index) => ({ id: row + (index + 1), taken: (index + row.charCodeAt(0)) % 5 === 0 })));
-
-function useBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  useEffect(() => { try { const raw = localStorage.getItem("ticket-booking-v2"); if (raw) setBookings(JSON.parse(raw) as Booking[]); } catch { /* keep empty */ } }, []);
-  const save = (next: Booking[]) => { setBookings(next); window.localStorage.setItem("ticket-booking-v2", JSON.stringify(next)); };
-  return [bookings, save] as const;
-}
+import { useState, useSyncExternalStore } from "react";
+import { ROWS, bookingStore, countAvailable, createBooking, seatsInRow, seatsWithBookings, toggleSeat } from "@/lib/ticket-booking";
 
 export default function Home() {
-  const [seats, setSeats] = useState(INITIAL_SEATS);
-  const [selected, setSelected] = useState<string[]>([]);
+  const bookings = useSyncExternalStore(bookingStore.subscribe, bookingStore.getSnapshot, bookingStore.getServerSnapshot);
+  const seats = seatsWithBookings(bookings);
+  const [picked, setPicked] = useState<string[]>([]);
   const [name, setName] = useState("");
-  const [bookings, saveBooking] = useBookings();
-  const available = useMemo(() => seats.filter((seat) => !seat.taken).length, [seats]);
-  const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((seat) => seat !== id) : [...current, id]);
+  const selected = picked.filter((id) => seats.some((seat) => seat.id === id && !seat.taken));
+  const available = countAvailable(seats);
+  const toggle = (id: string) => setPicked((current) => toggleSeat(current, id));
   const book = () => {
-    if (!name.trim() || selected.length === 0) return;
-    setSeats((current) => current.map((seat) => selected.includes(seat.id) ? { ...seat, taken: true } : seat));
-    saveBooking([{ name: name.trim(), seats: selected, at: Date.now() }, ...bookings]);
-    setName(""); setSelected([]);
+    const booking = createBooking(seats, name, selected);
+    if (!booking) return;
+    bookingStore.update((current) => [booking, ...current]);
+    setName(""); setPicked([]);
   };
 
   return (
@@ -44,7 +34,7 @@ export default function Home() {
           <div className="stage-label"><span>STAGE</span><i /></div>
           <div className="seat-legend"><span><i className="legend-open" /> open</span><span><i className="legend-selected" /> selected</span><span><i className="legend-taken" /> unavailable</span></div>
           <div className="seat-map">
-            {ROWS.map((row) => <div className="seat-row" key={row}><span className="row-label">{row}</span>{seats.filter((seat) => seat.id.startsWith(row)).map((seat) => <button key={seat.id} className={seat.taken ? "seat taken" : selected.includes(seat.id) ? "seat selected" : "seat"} disabled={seat.taken} aria-label={seat.taken ? `${seat.id} unavailable` : `Select seat ${seat.id}`} aria-pressed={selected.includes(seat.id)} onClick={() => toggle(seat.id)}>{seat.id.slice(1)}</button>)}</div>)}
+            {ROWS.map((row) => <div className="seat-row" key={row}><span className="row-label">{row}</span>{seatsInRow(seats, row).map((seat) => <button key={seat.id} className={seat.taken ? "seat taken" : selected.includes(seat.id) ? "seat selected" : "seat"} disabled={seat.taken} aria-label={seat.taken ? `${seat.id} unavailable` : `Select seat ${seat.id}`} aria-pressed={selected.includes(seat.id)} onClick={() => toggle(seat.id)}>{seat.id.slice(1)}</button>)}</div>)}
           </div>
           <div className="availability-line"><span>{available} seats remain</span><span>{selected.length} selected</span></div>
         </div>
