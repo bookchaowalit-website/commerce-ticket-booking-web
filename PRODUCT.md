@@ -1,51 +1,35 @@
-# bookchaowalit-ticket-booking-frontend — Product brief
+# Box Office (ticket booking) — Product truth
 
-**Slug:** `bookchaowalit-website/bookchaowalit-ticket-booking-frontend`  
-**Generated:** 2026-08-11 (bulk Book Dev closeout)  
-**Status:** starter / portfolio boundary
+> Inferred from the code and copy (no user interview). Checked against the portfolio card claims review
+> (`portfolio-site-web/docs/audits/CARD-CLAIMS-REVIEW-2026-10.md`, row `ticket-booking`) on 2026-10-23.
 
-## Current product truth
+## What it is
 
-- This is a local seat-map booking demo with name entry and browser-stored booking stubs.
-- It has no event backend, inventory service, payment flow, checkout, or confirmation delivery.
+A client-only seat-map demo: one show, four rows of eight seats with a fixed set unavailable, and booking stubs kept in this browser's localStorage. No payment, event backend or remote reservation.
 
-## Purpose
+## Who it is for
 
-Portfolio repository under Book Dev. This brief records ownership and the
-current honest status so the nested tree is not an empty shell in the task
-system.
+A portfolio visitor who wants to try a small seat-picking interaction.
 
-## Runnable path
+## What works today
 
-See `README.md` for install and run instructions when present.
+1. Pick and unpick open seats; the counters show seats remaining and selected.
+2. Reserve with a name: a stub (name, seats, date) is saved in localStorage and the seats turn unavailable. Seats booked earlier in this browser stay unavailable after a reload; a booking for a taken or unknown seat is refused.
+3. Recent bookings lists the last four stubs from this browser. A saved value of the wrong shape is ignored instead of breaking the page.
+4. `/api/mcp` answers JSON-RPC with `get_seat_map` and `get_row` over the fixed authored map only (the server never sees visitor bookings); unknown tools and methods get JSON-RPC errors.
+5. Front-end and server errors go to Sentry (errors only, personal data stripped) when `NEXT_PUBLIC_SENTRY_DSN` is set.
 
-## Limits
+## What does not work (and must not be claimed)
 
-- Not claimed as production-ready unless README and tests prove it.
-- Mobile smoke / emulator acceptance is separate and toolchain-dependent.
+- No event creation, time slots, confirmation emails, QR tickets, check-in dashboard or fee claims (removed from the portfolio card in the 2026-10 review).
+- No payment and no shared reservation: bookings exist only in the visitor's browser, so two visitors can book the same seat.
+- No account, cancel or edit of a stub.
 
-## Source README excerpt
+## Live URL and deploy state
 
-```
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+- Live: https://ticket-booking.bookchaowalit.com (HTTP 200 on 2026-10-23).
+- The Vercel project `bookchaowalit-ticket-booking-frontend` is deployed only by CLI. Its last production deploy is the CVE patch (2026-10-23, CLI, commit d7038be). Its Git link names the old repository `bookchaowalit/bookchaowalit-ticket-booking-frontend`, so a push to `main` does not deploy: the L2 work stays undeployed until the owner reconnects Vercel Git to this repository (owner action D9). `NEXT_PUBLIC_SENTRY_DSN` is already set on the Vercel project (Sentry project `commerce-ticket-booking-web`, org `personal-yu0`).
 
-## Getting Started
+## Boundaries
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize an
-```
+- Browser-only apart from the stateless `/api/mcp` route.
