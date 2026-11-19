@@ -1,56 +1,123 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
+import { AppFoot, AppTop } from "@/components/app-shell";
 import { ROWS, bookingStore, countAvailable, createBooking, seatsInRow, seatsWithBookings, toggleSeat } from "@/lib/ticket-booking";
+
+const stubDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
 export default function Home() {
   const bookings = useSyncExternalStore(bookingStore.subscribe, bookingStore.getSnapshot, bookingStore.getServerSnapshot);
   const seats = seatsWithBookings(bookings);
   const [picked, setPicked] = useState<string[]>([]);
   const [name, setName] = useState("");
+  const [announcement, setAnnouncement] = useState("");
   const selected = picked.filter((id) => seats.some((seat) => seat.id === id && !seat.taken));
   const available = countAvailable(seats);
+  const missing = [!name.trim() ? "enter a name" : "", selected.length === 0 ? "choose at least one open seat" : ""].filter(Boolean);
   const toggle = (id: string) => setPicked((current) => toggleSeat(current, id));
-  const book = () => {
+  const book = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const booking = createBooking(seats, name, selected);
     if (!booking) return;
     bookingStore.update((current) => [booking, ...current]);
-    setName(""); setPicked([]);
+    setAnnouncement(`Reserved ${booking.seats.join(", ")} for ${booking.name}.`);
+    setName("");
+    setPicked([]);
   };
 
   return (
-    <main className="box-office">
-      <header className="office-header">
-        <div className="ticket-mark">B<span>✦</span>O</div>
-        <div className="office-name"><span>BOOKCHAOWALIT PRESENTS</span><strong>SEAT MAP / 001</strong></div>
-        <div className="office-line" /><span className="office-state">LOCAL BOOKING DEMO</span>
-      </header>
-      <section className="showbill">
-        <div><p className="ticket-label">ONE SCREEN / FOUR ROWS</p><h1>Pick your<br /><em>place.</em></h1></div>
-        <div className="show-details"><span>SHOW 01</span><strong>THE SIMPLE SEAT MAP</strong><p>Choose open seats, leave a name, and keep the booking in this browser.</p></div>
-      </section>
-      <section className="booking-window" aria-label="Seat booking">
-        <div className="seat-side">
-          <div className="stage-label"><span>STAGE</span><i /></div>
-          <div className="seat-legend"><span><i className="legend-open" /> open</span><span><i className="legend-selected" /> selected</span><span><i className="legend-taken" /> unavailable</span></div>
-          <div className="seat-map">
-            {ROWS.map((row) => <div className="seat-row" key={row}><span className="row-label">{row}</span>{seatsInRow(seats, row).map((seat) => <button key={seat.id} className={seat.taken ? "seat taken" : selected.includes(seat.id) ? "seat selected" : "seat"} disabled={seat.taken} aria-label={seat.taken ? `${seat.id} unavailable` : `Select seat ${seat.id}`} aria-pressed={selected.includes(seat.id)} onClick={() => toggle(seat.id)}>{seat.id.slice(1)}</button>)}</div>)}
+    <div className="as">
+      <a className="as-skip" href="#main">Skip to content</a>
+      <AppTop name="Box Office" tagline="Seat map demo" />
+
+      <main id="main" className="tb-page">
+        <div className="as-head">
+          <div>
+            <h1>Pick your place.</h1>
+            <p>Choose open seats, leave a name, and keep the booking in this browser. No payment or remote reservation is connected.</p>
           </div>
-          <div className="availability-line"><span>{available} seats remain</span><span>{selected.length} selected</span></div>
         </div>
-        <aside className="ticket-window">
-          <p className="ticket-label">BOX OFFICE WINDOW</p><h2>Your<br /><em>reservation.</em></h2>
-          <p className="window-note">No payment or remote reservation is connected. This is a seat-map interaction demo.</p>
-          <label><span>Name</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" /></label>
-          <div className="selection-receipt"><span>SEATS</span><strong>{selected.length ? selected.join(" · ") : "Choose on the map"}</strong></div>
-          <button className="reserve-button" disabled={!name.trim() || selected.length === 0} onClick={book}>Reserve seats <span>→</span></button>
-        </aside>
-      </section>
-      <section className="booking-history">
-        <div><p className="ticket-label">LOCAL STUBS</p><h2>Recent bookings</h2></div>
-        {bookings.length === 0 ? <p className="no-bookings">Your browser has no booking stubs yet.</p> : <div className="stub-list">{bookings.slice(0, 4).map((booking) => <div className="stub" key={`${booking.at}-${booking.name}`}><span>{new Date(booking.at).toLocaleDateString("en", { month: "short", day: "numeric" })}</span><strong>{booking.name}</strong><b>{booking.seats.join(" · ")}</b></div>)}</div>}
-      </section>
-      <footer className="office-footer"><span>BOOKCHAOWALIT / TICKET BOOKING</span><span>LOCAL BROWSER STATE · DEMO-GRADE</span></footer>
-    </main>
+
+        <section className="as-composer tb-map" aria-labelledby="map-title">
+          <div className="tb-map-head">
+            <h2 id="map-title">The simple seat map</h2>
+            <p aria-live="polite">{available} seats open · {selected.length} selected</p>
+          </div>
+          <ul className="tb-legend" aria-label="Legend">
+            <li><span className="tb-key" data-state="open" aria-hidden="true" />Open</li>
+            <li><span className="tb-key" data-state="selected" aria-hidden="true" />Selected</li>
+            <li><span className="tb-key" data-state="taken" aria-hidden="true" />Unavailable (struck through)</li>
+          </ul>
+          <p className="tb-stage" aria-hidden="true">Stage</p>
+          <div className="tb-rows">
+            {ROWS.map((row) => (
+              <div className="tb-row" key={row} role="group" aria-label={`Row ${row}`}>
+                <span className="tb-row-label" aria-hidden="true">{row}</span>
+                <div className="tb-seats">
+                  {seatsInRow(seats, row).map((seat) => (
+                    <button
+                      key={seat.id}
+                      type="button"
+                      className="tb-seat"
+                      data-state={seat.taken ? "taken" : selected.includes(seat.id) ? "selected" : "open"}
+                      disabled={seat.taken}
+                      aria-label={seat.taken ? `Seat ${seat.id}, unavailable` : `Seat ${seat.id}`}
+                      aria-pressed={seat.taken ? undefined : selected.includes(seat.id)}
+                      onClick={() => toggle(seat.id)}
+                    >
+                      {seat.id.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <form id="reserve" className="as-composer tb-form" onSubmit={book} aria-labelledby="reserve-title">
+          <h2 id="reserve-title">Your reservation</h2>
+          <label className="as-field">Name
+            <input value={name} autoComplete="name" onChange={(event) => setName(event.target.value)} placeholder="Your name" aria-describedby="reserve-help" />
+          </label>
+          <p className="tb-seats-chosen"><span>Seats</span><strong>{selected.length ? selected.join(" · ") : "None yet — choose on the map"}</strong></p>
+          <div className="as-composer-foot">
+            <p id="reserve-help" className="tb-help" aria-live="polite">{missing.length ? `To reserve, ${missing.join(" and ")}.` : "Ready to reserve."}</p>
+            <button className="as-button" type="submit" disabled={missing.length > 0}>Reserve {selected.length > 1 ? `${selected.length} seats` : "seat"}</button>
+          </div>
+        </form>
+
+        {selected.length ? (
+          <div className="tb-sticky">
+            <span>{selected.length} {selected.length === 1 ? "seat" : "seats"} selected</span>
+            <a className="as-button" href="#reserve">Review and reserve</a>
+          </div>
+        ) : null}
+
+        <section className="tb-history" aria-labelledby="history-title">
+          <h2 id="history-title" className="tb-title">Bookings in this browser</h2>
+          {bookings.length ? (
+            <ul className="as-list">
+              {bookings.slice(0, 4).map((booking) => (
+                <li className="as-row" key={`${booking.at}-${booking.name}`}>
+                  <div>
+                    <h3>{booking.name}</h3>
+                    <p>Seats {booking.seats.join(", ")}</p>
+                  </div>
+                  <span className="tb-stub-date"><time dateTime={new Date(booking.at).toISOString()}>{stubDate.format(booking.at)}</time></span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="as-list as-empty"><strong>No bookings yet</strong>Choose seats and reserve them; the stub shows up here.</div>
+          )}
+        </section>
+
+        <p className="as-note">A seat-map interaction demo. Bookings stay in this browser; nothing is paid, sent or held anywhere else.</p>
+      </main>
+
+      <p className="as-sr" role="status" aria-live="polite">{announcement}</p>
+      <AppFoot source="https://github.com/bookchaowalit-website/commerce-ticket-booking-web" />
+    </div>
   );
 }

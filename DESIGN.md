@@ -1,44 +1,16 @@
-# Design system — Ticket Booking
+# Ticket Booking — Box Office
 
-## Overview
+Since 2026-11-19 the box office uses the shared **App shell** (`app/app-shell.css`, `components/app-shell.tsx`,
+see `APP-SHELL.md`): Geist via next/font, the `--as-*` light/dark tokens (no hard-coded colours outside them,
+apart from white text on the selected seat), the shell top bar, fields, buttons and footer (with the link back
+to bookchaowalit.com). Box-office pieces (`.tb-*`) live in `app/globals.css`.
 
-Ticket booking is framed as a neighborhood box office: a printed showbill introduces the seat map, a dark theater window holds the interaction, and local booking stubs sit below.
+- Head: title and one honest sentence, then the seat map in the first screen.
+- Seats are 44px buttons with `aria-pressed`; on phones each row splits into two half-rows of four.
+- Unavailable seats are struck through on a striped, dashed tile and named "unavailable" for screen readers,
+  so the state never rests on colour alone.
+- The reservation form says what is missing ("enter a name and choose at least one open seat") instead of only
+  dimming Reserve. On phones a sticky bar shows the selection count and jumps to the form.
+- Bookings made in this browser are listed below, with an empty state.
 
-## Colors
-
-- #EEE9DF — showbill paper and window paper.
-- #202735 — theater panel navy.
-- #C94734 — box-office red for reservation actions.
-- #E0A34B — marquee gold for selection and labels.
-- #767B83 — secondary ticket ink.
-
-## Typography
-
-Georgia gives the showbill its human editorial voice. Trebuchet MS handles utility copy, while Courier New is reserved for ticket metadata and seat labels.
-
-## Layout
-
-The page follows a ticketing ritual: show title, stage line, seat map, reservation window, then local stubs. The seat map owns the large dark panel; the form is a distinct paper window beside it and stacks below on mobile.
-
-## Elevation & Depth
-
-The dark theater panel is the main depth move. The paper reservation window is a contrasting plane rather than a floating card; seat availability is expressed by fill and disabled state.
-
-## Shapes
-
-Seats are square and compact like a printed plan. Controls use simple rectangles, rules, and a single red action field.
-
-## Components
-
-- Showbill header
-- Stage line and seat legend
-- Interactive A–D seat map
-- Reservation window with name field
-- Local booking stubs
-
-## Do's and Don'ts
-
-- Do make taken, selected, and open seats legible without color alone.
-- Do keep payment and remote reservation limitations visible.
-- Don't imply real inventory, checkout, payment, or confirmation email.
-- Don't bury the seat map inside generic cards or make the interaction decorative.
+Bookings stay in the visitor's browser; nothing is paid, sent or held anywhere else.
