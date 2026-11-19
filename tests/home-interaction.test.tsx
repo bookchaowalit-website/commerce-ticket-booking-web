@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "@/app/page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -77,5 +77,32 @@ describe("booking", () => {
     press(seat("C1"));
     press(seat("C2"));
     expect($("#reserve .as-button")!.textContent).toBe("Reserve 2 seats");
+  });
+});
+
+describe("phone jump bar", () => {
+  it("a seat focused under the floating bar scrolls up clear of it, focus ring included", () => {
+    const open = [...host.querySelectorAll<HTMLButtonElement>(".tb-seat:not(:disabled)")];
+    press(open[0]);
+    const bar = $<HTMLDivElement>(".tb-sticky")!;
+    bar.style.position = "sticky";
+    const rect = (top: number, height: number) => ({ top, bottom: top + height, left: 0, right: 0, width: 0, height, x: 0, y: top, toJSON() {} }) as DOMRect;
+    vi.spyOn(bar, "getBoundingClientRect").mockReturnValue(rect(600, 60));
+    const under = open[open.length - 1];
+    vi.spyOn(under, "getBoundingClientRect").mockReturnValue(rect(610, 44));
+    const scrollBy = vi.fn();
+    vi.stubGlobal("scrollBy", scrollBy);
+    try {
+      act(() => { under.focus(); });
+      expect(scrollBy).toHaveBeenCalledWith({ top: 62 }); // 610 + 44 + 8 - 600
+      scrollBy.mockClear();
+      const clear = open[1];
+      vi.spyOn(clear, "getBoundingClientRect").mockReturnValue(rect(300, 44));
+      act(() => { clear.focus(); });
+      expect(scrollBy).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
   });
 });

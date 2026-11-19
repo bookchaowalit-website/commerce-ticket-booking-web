@@ -76,3 +76,10 @@ export const bookingStore = createLocalStore<Booking[]>({
   serialize: (bookings) => JSON.stringify(bookings),
   getStorage: browserStorage,
 });
+
+type Box = { top: number; bottom: number };
+/** Pixels a seat must scroll up to sit above the floating bar with room for its 3px focus ring + 2px offset (0 when clear). */
+export function barOverlap(seat: Box, bar: Box, ring = 8): number {
+  if (seat.top >= bar.bottom) return 0; // below the bar (already past it)
+  return Math.max(0, seat.bottom + ring - bar.top);
+}
