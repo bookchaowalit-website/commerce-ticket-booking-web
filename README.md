@@ -33,4 +33,4 @@ scan on every push and PR to `main`.
 - `lib/local-store.ts`: small localStorage store for `useSyncExternalStore` (hydration-safe, works when storage is blocked).
 - `app/api/mcp/route.ts`: stateless JSON-RPC endpoint with `get_seat_map` and `get_row` over the fixed map.
 - `lib/sentry.ts` + `instrumentation*.ts`: error reporting to Sentry, errors only, personal data stripped; off when `NEXT_PUBLIC_SENTRY_DSN` is unset.
-- `app/more-projects/page.tsx`: shared portfolio link page (copied per repository, not a package).
+- `/more-projects` redirects (308) to https://bookchaowalit.com/ (`next.config.ts`).
