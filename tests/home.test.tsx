@@ -12,6 +12,11 @@ describe("home page on the App shell", () => {
     expect(html).toContain('href="https://bookchaowalit.com/"');
   });
 
+  it("announces the whole seat count sentence, not just the changed number", () => {
+    const html = renderToString(<Home />);
+    expect(html).toMatch(/<p aria-live="polite" aria-atomic="true">26(<!-- -->)? seats open/);
+  });
+
   it("tells screen readers where the stage is: row A nearest", () => {
     const html = renderToString(<Home />);
     const stage = html.match(/<p class="tb-stage"[^>]*>([\s\S]*?)<\/p>/);

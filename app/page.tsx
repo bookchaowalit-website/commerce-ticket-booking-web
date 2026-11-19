@@ -42,7 +42,7 @@ export default function Home() {
         <section className="as-composer tb-map" aria-labelledby="map-title">
           <div className="tb-map-head">
             <h2 id="map-title">The simple seat map</h2>
-            <p aria-live="polite">{available} seats open · {selected.length} selected</p>
+            <p aria-live="polite" aria-atomic="true">{available} seats open · {selected.length} selected</p>
           </div>
           <ul className="tb-legend" aria-label="Legend">
             <li><span className="tb-key" data-state="open" aria-hidden="true" />Open</li>
@@ -80,7 +80,7 @@ export default function Home() {
         {selected.length ? (
           <div className="tb-sticky">
             <span>{selected.length} {selected.length === 1 ? "seat" : "seats"} selected</span>
-            <a className="as-button" href="#reserve">Review and reserve</a>
+            <a className="as-plain" href="#reserve">Review and reserve</a>
           </div>
         ) : null}
 
