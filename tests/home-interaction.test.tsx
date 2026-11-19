@@ -53,6 +53,26 @@ describe("booking", () => {
     expect(JSON.parse(localStorage.getItem("ticket-booking-v2")!)[0]).toMatchObject({ name: "Mina", seats: ["B2"] });
   });
 
+  it("puts the phone jump bar before the form, so once the form is in view the bar cannot cover Reserve", () => {
+    press(seat("C1"));
+    const bar = $(".tb-sticky")!;
+    const form = $("#reserve")!;
+    expect(bar.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(bar.querySelector("a")!.getAttribute("href")).toBe("#reserve");
+  });
+
+  it("still renders the page and the good stubs when a saved stub has an impossible date", () => {
+    act(() => root.unmount());
+    localStorage.setItem("ticket-booking-v2", JSON.stringify([{ name: "Broken", seats: ["A2"], at: 9e15 }, { name: "Mina", seats: ["B2"], at: 1_700_000_000_000 }]));
+    root = createRoot(host);
+    act(() => root.render(<Home />));
+    expect($(".tb-history")!.textContent).toContain("Mina");
+    expect($(".tb-history")!.textContent).not.toContain("Broken");
+    expect($(".tb-history time")!.getAttribute("dateTime")).toBe(new Date(1_700_000_000_000).toISOString());
+    expect(seat("B2").disabled).toBe(true);
+    expect(seat("A2").disabled).toBe(false);
+  });
+
   it("labels the button for several seats", () => {
     press(seat("C1"));
     press(seat("C2"));

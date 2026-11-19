@@ -40,12 +40,17 @@ export function createBooking(seats: Seat[], name: string, selected: string[], a
   return { name: trimmed, seats: [...selected], at };
 }
 
+/** A time a Date can show: finite and inside Date's range (±8.64e15 ms), so toISOString() never throws. */
+function isStubTime(value: unknown): value is number {
+  return typeof value === "number" && !Number.isNaN(new Date(value).getTime());
+}
+
 function isBooking(value: unknown): value is Booking {
   if (typeof value !== "object" || value === null) return false;
   const entry = value as Record<string, unknown>;
   return (
     typeof entry.name === "string" &&
-    typeof entry.at === "number" &&
+    isStubTime(entry.at) &&
     Array.isArray(entry.seats) &&
     entry.seats.every((seat) => typeof seat === "string")
   );

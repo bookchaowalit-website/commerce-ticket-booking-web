@@ -68,4 +68,12 @@ describe("parseBookings", () => {
     const raw = JSON.stringify([{ name: "Ada", seats: ["A2"], at: 1 }, { name: "No seats", at: 2 }, { name: "Bad", seats: [3], at: 3 }, null]);
     expect(parseBookings(raw)).toEqual([{ name: "Ada", seats: ["A2"], at: 1 }]);
   });
+
+  it("drops stubs whose time a Date cannot show, so the page never meets an Invalid Date or a RangeError", () => {
+    const raw = JSON.stringify([{ name: "Ada", seats: ["A2"], at: 1 }, { name: "Too late", seats: ["A3"], at: 9e15 }, { name: "Too early", seats: ["A4"], at: -9e15 }]);
+    expect(parseBookings(raw)).toEqual([{ name: "Ada", seats: ["A2"], at: 1 }]);
+    // NaN / Infinity serialise to null, which is not a number either.
+    expect(parseBookings('[{"name":"Nil","seats":["A5"],"at":null}]')).toEqual([]);
+    expect(parseBookings('[{"name":"Edge","seats":["A6"],"at":8.64e15}]')).toEqual([{ name: "Edge", seats: ["A6"], at: 8.64e15 }]);
+  });
 });

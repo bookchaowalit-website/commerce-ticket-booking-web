@@ -75,6 +75,15 @@ export default function Home() {
           </div>
         </section>
 
+        {/* The phone jump bar sits BEFORE the form: a bottom-sticky bar only floats while its own place is below the
+            screen, so once the form is in view the bar has scrolled away above it and can never cover Reserve. */}
+        {selected.length ? (
+          <div className="tb-sticky">
+            <span>{selected.length} {selected.length === 1 ? "seat" : "seats"} selected</span>
+            <a className="as-button" href="#reserve">Review and reserve</a>
+          </div>
+        ) : null}
+
         <form id="reserve" className="as-composer tb-form" onSubmit={book} aria-labelledby="reserve-title">
           <h2 id="reserve-title">Your reservation</h2>
           <label className="as-field">Name
@@ -87,12 +96,6 @@ export default function Home() {
           </div>
         </form>
 
-        {selected.length ? (
-          <div className="tb-sticky">
-            <span>{selected.length} {selected.length === 1 ? "seat" : "seats"} selected</span>
-            <a className="as-button" href="#reserve">Review and reserve</a>
-          </div>
-        ) : null}
 
         <section className="tb-history" aria-labelledby="history-title">
           <h2 id="history-title" className="tb-title">Bookings in this browser</h2>
