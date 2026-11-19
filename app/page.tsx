@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { AppFoot, AppTop } from "@/components/app-shell";
 import { ROWS, barOverlap, bookingStore, countAvailable, createBooking, seatsInRow, seatsWithBookings, toggleSeat } from "@/lib/ticket-booking";
 
@@ -21,6 +21,14 @@ export default function Home() {
     const overlap = barOverlap(seat.getBoundingClientRect(), bar.getBoundingClientRect());
     if (overlap > 0) window.scrollBy({ top: overlap });
   };
+  // The first pick is what makes the bar appear, so onFocus (which ran before it existed) cannot clear it; and Space on
+  // an already-focused seat fires no focus at all. After each pick renders, the bar is in the DOM and measurable.
+  const pickedSeat = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const seat = pickedSeat.current;
+    pickedSeat.current = null;
+    if (seat) keepClearOfBar(seat);
+  });
   const selected = picked.filter((id) => seats.some((seat) => seat.id === id && !seat.taken));
   const available = countAvailable(seats);
   const missing = [!name.trim() ? "enter a name" : "", selected.length === 0 ? "choose at least one open seat" : ""].filter(Boolean);
@@ -73,7 +81,7 @@ export default function Home() {
                       disabled={seat.taken}
                       aria-label={seat.taken ? `Seat ${seat.id}, unavailable` : `Seat ${seat.id}`}
                       aria-pressed={seat.taken ? undefined : selected.includes(seat.id)}
-                      onClick={() => toggle(seat.id)}
+                      onClick={(event) => { pickedSeat.current = event.currentTarget; toggle(seat.id); }}
                       onFocus={(event) => keepClearOfBar(event.currentTarget)}
                     >
                       {seat.id.slice(1)}

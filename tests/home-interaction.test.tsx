@@ -21,6 +21,8 @@ const submit = () => act(() => { $("#reserve")!.dispatchEvent(new Event("submit"
 
 beforeEach(() => {
   localStorage.clear();
+  // bookingStore caches in memory; an explicit empty list makes it reload with no bookings for each test.
+  localStorage.setItem("ticket-booking-v2", "[]");
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
@@ -51,6 +53,30 @@ describe("booking", () => {
     expect($("[role='status']")!.textContent).toBe("Reserved B2 for Mina.");
     expect($(".tb-sticky")).toBeNull();
     expect(JSON.parse(localStorage.getItem("ticket-booking-v2")!)[0]).toMatchObject({ name: "Mina", seats: ["B2"] });
+  });
+
+  it("on the first pick, scrolls the seat clear of the phone bar once the bar has rendered", () => {
+    // jsdom has no stylesheet: report the bar as sticky, as the phone CSS makes it.
+    const realStyle = window.getComputedStyle.bind(window);
+    vi.spyOn(window, "getComputedStyle").mockImplementation((el, pseudo) =>
+      (el as Element).classList?.contains("tb-sticky") ? ({ position: "sticky" } as CSSStyleDeclaration) : realStyle(el, pseudo));
+    const rect = (top: number, height: number) => ({ top, bottom: top + height, left: 0, right: 0, width: 0, height, x: 0, y: top, toJSON() {} }) as DOMRect;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains("tb-sticky")) return rect(580, 60);
+      if (this.classList.contains("tb-seat")) return rect(590, 44);
+      return rect(0, 0);
+    });
+    const scrollBy = vi.fn();
+    vi.stubGlobal("scrollBy", scrollBy);
+    try {
+      // No bar exists when the seat gets focus, so only the pick itself, after the bar renders, can scroll it clear.
+      press(seat("D1"));
+      expect($(".tb-sticky")).not.toBeNull();
+      expect(scrollBy).toHaveBeenCalledWith({ top: 62 }); // 590 + 44 + 8 - 580
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
   });
 
   it("puts the phone jump bar before the form, so once the form is in view the bar cannot cover Reserve", () => {
