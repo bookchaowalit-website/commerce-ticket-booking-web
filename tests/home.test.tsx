@@ -14,6 +14,13 @@ describe("home page on the App shell", () => {
     expect(html).toContain('href="https://bookchaowalit.com/"');
   });
 
+  it("tells screen readers where the stage is: row A nearest", () => {
+    const html = renderToString(<Home />);
+    const stage = html.match(/<p class="tb-stage"[^>]*>([\s\S]*?)<\/p>/);
+    expect(stage?.[0]).not.toContain("aria-hidden");
+    expect(stage?.[1].replace(/<[^>]+>/g, "")).toBe("Stage, row A is nearest and row D farthest");
+  });
+
   it("marks unavailable seats in words and keeps Reserve disabled with a reason", () => {
     const html = renderToString(<Home />);
     expect(html).toContain('aria-label="Seat A1, unavailable"');

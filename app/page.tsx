@@ -49,7 +49,8 @@ export default function Home() {
             <li><span className="tb-key" data-state="selected" aria-hidden="true" />Selected</li>
             <li><span className="tb-key" data-state="taken" aria-hidden="true" />Unavailable (struck through)</li>
           </ul>
-          <p className="tb-stage" aria-hidden="true">Stage</p>
+          {/* Read out too: the row names alone do not say which side faces the stage. */}
+          <p className="tb-stage">Stage<span className="as-sr">, row A is nearest and row D farthest</span></p>
           <div className="tb-rows">
             {ROWS.map((row) => (
               <div className="tb-row" key={row} role="group" aria-label={`Row ${row}`}>
