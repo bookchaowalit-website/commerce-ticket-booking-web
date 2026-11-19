@@ -10,7 +10,7 @@ to bookchaowalit.com). Box-office pieces (`.tb-*`) live in `app/globals.css`.
 - Unavailable seats are struck through on a striped, dashed tile and named "unavailable" for screen readers,
   so the state never rests on colour alone.
 - The reservation form says what is missing ("enter a name and choose at least one open seat") instead of only
-  dimming Reserve. On phones a sticky bar shows the selection count and jumps to the form.
+  dimming Reserve. On phones a bar right after the seat map (in the page flow, never floating over seats) shows the selection count and jumps to the form.
 - Bookings made in this browser are listed below, with an empty state.
 
 Bookings stay in the visitor's browser; nothing is paid, sent or held anywhere else.

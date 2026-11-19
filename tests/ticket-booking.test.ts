@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  barOverlap,
   INITIAL_SEATS,
   countAvailable,
   createBooking,
@@ -76,14 +75,5 @@ describe("parseBookings", () => {
     // NaN / Infinity serialise to null, which is not a number either.
     expect(parseBookings('[{"name":"Nil","seats":["A5"],"at":null}]')).toEqual([]);
     expect(parseBookings('[{"name":"Edge","seats":["A6"],"at":8.64e15}]')).toEqual([{ name: "Edge", seats: ["A6"], at: 8.64e15 }]);
-  });
-});
-
-describe("barOverlap", () => {
-  it("is how far a seat must scroll up to clear the bar and its focus ring", () => {
-    expect(barOverlap({ top: 610, bottom: 654 }, { top: 600, bottom: 660 })).toBe(62);
-    expect(barOverlap({ top: 500, bottom: 544 }, { top: 600, bottom: 660 })).toBe(0);
-    expect(barOverlap({ top: 548, bottom: 592 }, { top: 600, bottom: 660 })).toBe(0);
-    expect(barOverlap({ top: 700, bottom: 744 }, { top: 600, bottom: 660 })).toBe(0);
   });
 });

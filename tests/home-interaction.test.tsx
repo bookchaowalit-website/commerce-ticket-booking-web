@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import Home from "@/app/page";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -55,30 +56,6 @@ describe("booking", () => {
     expect(JSON.parse(localStorage.getItem("ticket-booking-v2")!)[0]).toMatchObject({ name: "Mina", seats: ["B2"] });
   });
 
-  it("on the first pick, scrolls the seat clear of the phone bar once the bar has rendered", () => {
-    // jsdom has no stylesheet: report the bar as sticky, as the phone CSS makes it.
-    const realStyle = window.getComputedStyle.bind(window);
-    vi.spyOn(window, "getComputedStyle").mockImplementation((el, pseudo) =>
-      (el as Element).classList?.contains("tb-sticky") ? ({ position: "sticky" } as CSSStyleDeclaration) : realStyle(el, pseudo));
-    const rect = (top: number, height: number) => ({ top, bottom: top + height, left: 0, right: 0, width: 0, height, x: 0, y: top, toJSON() {} }) as DOMRect;
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
-      if (this.classList.contains("tb-sticky")) return rect(580, 60);
-      if (this.classList.contains("tb-seat")) return rect(590, 44);
-      return rect(0, 0);
-    });
-    const scrollBy = vi.fn();
-    vi.stubGlobal("scrollBy", scrollBy);
-    try {
-      // No bar exists when the seat gets focus, so only the pick itself, after the bar renders, can scroll it clear.
-      press(seat("D1"));
-      expect($(".tb-sticky")).not.toBeNull();
-      expect(scrollBy).toHaveBeenCalledWith({ top: 62 }); // 590 + 44 + 8 - 580
-    } finally {
-      vi.unstubAllGlobals();
-      vi.restoreAllMocks();
-    }
-  });
-
   it("puts the phone jump bar before the form, so once the form is in view the bar cannot cover Reserve", () => {
     press(seat("C1"));
     const bar = $(".tb-sticky")!;
@@ -107,28 +84,9 @@ describe("booking", () => {
 });
 
 describe("phone jump bar", () => {
-  it("a seat focused under the floating bar scrolls up clear of it, focus ring included", () => {
-    const open = [...host.querySelectorAll<HTMLButtonElement>(".tb-seat:not(:disabled)")];
-    press(open[0]);
-    const bar = $<HTMLDivElement>(".tb-sticky")!;
-    bar.style.position = "sticky";
-    const rect = (top: number, height: number) => ({ top, bottom: top + height, left: 0, right: 0, width: 0, height, x: 0, y: top, toJSON() {} }) as DOMRect;
-    vi.spyOn(bar, "getBoundingClientRect").mockReturnValue(rect(600, 60));
-    const under = open[open.length - 1];
-    vi.spyOn(under, "getBoundingClientRect").mockReturnValue(rect(610, 44));
-    const scrollBy = vi.fn();
-    vi.stubGlobal("scrollBy", scrollBy);
-    try {
-      act(() => { under.focus(); });
-      expect(scrollBy).toHaveBeenCalledWith({ top: 62 }); // 610 + 44 + 8 - 600
-      scrollBy.mockClear();
-      const clear = open[1];
-      vi.spyOn(clear, "getBoundingClientRect").mockReturnValue(rect(300, 44));
-      act(() => { clear.focus(); });
-      expect(scrollBy).not.toHaveBeenCalled();
-    } finally {
-      vi.unstubAllGlobals();
-      vi.restoreAllMocks();
-    }
+  it("sits in the page flow, never floating over the seat map", () => {
+    const css = readFileSync("app/globals.css", "utf8");
+    const bar = [...css.matchAll(/\.tb-sticky \{([^}]*)\}/g)].map((m) => m[1]).join(" ");
+    expect(bar).not.toMatch(/position:\s*(sticky|fixed)/);
   });
 });

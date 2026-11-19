@@ -1,8 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { AppFoot, AppTop } from "@/components/app-shell";
-import { ROWS, barOverlap, bookingStore, countAvailable, createBooking, seatsInRow, seatsWithBookings, toggleSeat } from "@/lib/ticket-booking";
+import { ROWS, bookingStore, countAvailable, createBooking, seatsInRow, seatsWithBookings, toggleSeat } from "@/lib/ticket-booking";
 
 const stubDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
@@ -12,23 +12,6 @@ export default function Home() {
   const [picked, setPicked] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [announcement, setAnnouncement] = useState("");
-  const barRef = useRef<HTMLDivElement>(null);
-  // The phone bar floats over the bottom of the map: a seat focused (or tapped) under it scrolls up clear of it,
-  // focus ring included, instead of hiding behind it.
-  const keepClearOfBar = (seat: HTMLElement) => {
-    const bar = barRef.current;
-    if (!bar || getComputedStyle(bar).position !== "sticky") return;
-    const overlap = barOverlap(seat.getBoundingClientRect(), bar.getBoundingClientRect());
-    if (overlap > 0) window.scrollBy({ top: overlap });
-  };
-  // The first pick is what makes the bar appear, so onFocus (which ran before it existed) cannot clear it; and Space on
-  // an already-focused seat fires no focus at all. After each pick renders, the bar is in the DOM and measurable.
-  const pickedSeat = useRef<HTMLElement | null>(null);
-  useLayoutEffect(() => {
-    const seat = pickedSeat.current;
-    pickedSeat.current = null;
-    if (seat) keepClearOfBar(seat);
-  });
   const selected = picked.filter((id) => seats.some((seat) => seat.id === id && !seat.taken));
   const available = countAvailable(seats);
   const missing = [!name.trim() ? "enter a name" : "", selected.length === 0 ? "choose at least one open seat" : ""].filter(Boolean);
@@ -81,8 +64,7 @@ export default function Home() {
                       disabled={seat.taken}
                       aria-label={seat.taken ? `Seat ${seat.id}, unavailable` : `Seat ${seat.id}`}
                       aria-pressed={seat.taken ? undefined : selected.includes(seat.id)}
-                      onClick={(event) => { pickedSeat.current = event.currentTarget; toggle(seat.id); }}
-                      onFocus={(event) => keepClearOfBar(event.currentTarget)}
+                      onClick={() => toggle(seat.id)}
                     >
                       {seat.id.slice(1)}
                     </button>
@@ -93,10 +75,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* The phone jump bar sits BEFORE the form: a bottom-sticky bar only floats while its own place is below the
-            screen, so once the form is in view the bar has scrolled away above it and can never cover Reserve. */}
+        {/* Phones: a jump bar in the page flow right after the map (never floating, so it cannot cover a seat). */}
         {selected.length ? (
-          <div className="tb-sticky" ref={barRef}>
+          <div className="tb-sticky">
             <span>{selected.length} {selected.length === 1 ? "seat" : "seats"} selected</span>
             <a className="as-button" href="#reserve">Review and reserve</a>
           </div>

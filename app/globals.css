@@ -38,9 +38,8 @@ html { scroll-padding-top: 64px; }
   .tb-seats { grid-template-columns: repeat(4, 44px); }
 }
 @media (max-width: 760px) {
-  /* Keyboard focus scrolls a seat clear of the floating bar (bar ~60px + 12px gap + focus ring). */
-  html { scroll-padding-bottom: 88px; }
-  .tb-sticky { position: sticky; bottom: 12px; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 8px 8px 8px 16px; border: 1px solid var(--as-line); border-radius: 980px; background: var(--as-surface); box-shadow: 0 8px 24px rgb(0 0 0 / 12%); font-size: 15px; font-weight: 600; }
+  /* In the page flow, not floating: a bar over the map would take taps meant for the seats under it. */
+  .tb-sticky { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 8px 8px 8px 16px; border: 1px solid var(--as-line); border-radius: 980px; background: var(--as-surface); box-shadow: 0 8px 24px rgb(0 0 0 / 12%); font-size: 15px; font-weight: 600; }
 }
 @media (forced-colors: active) {
   .tb-seat, .tb-key { forced-color-adjust: none; }
